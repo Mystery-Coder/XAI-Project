@@ -1,6 +1,8 @@
 
 GET http://127.0.0.1:5000/ HTTP/1.1
 
+###
+GET http://127.0.0.1:5000/get_property_explaination HTTP/1.1
 
 
 ###
@@ -25,6 +27,7 @@ POST http://127.0.0.1:5000/predict_loan HTTP/1.1
 content-type: application/json
 
 {
+    "title" : "Property Purchase",
     "loan_amnt": 50000,
         "debt_settlement_flag": 0,
         "int_rate": 7,
@@ -39,4 +42,21 @@ content-type: application/json
         "mths_since_rcnt_il": 0,
         "collection_recovery_fee": 0,
         "il_util": 0
+}
+
+
+###
+POST http://127.0.0.1:5000/plot1 HTTP/1.1
+content-type: application/json
+
+{
+    "posted_by": 0,
+    "under_construction": 0,
+    "rera": 0,
+    "bhk": 2,
+    "square_feet": 3000,
+    "ready_to_move": 0,
+    "resale": 0,
+    "city": "Bangalore",
+    "locality": "Whitefield"
 }

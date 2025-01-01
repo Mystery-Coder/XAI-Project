@@ -5,10 +5,10 @@ import {
     MenuItem,
     TextField,
     Button,
-    Card,
 } from "@mui/material";
 
 import SendIcon from "@mui/icons-material/Send";
+import TipsAndUpdatesOutlinedIcon from "@mui/icons-material/TipsAndUpdatesOutlined";
 import { useState } from "react";
 
 // import { mapCity } from "../Helper";
@@ -21,6 +21,23 @@ const rowStyle = {
     alignItems: "center", // Align items vertically
 };
 const url = "http://127.0.0.1:5000/predict_property";
+
+const decodeBase64 = (base64Str) => {
+    const decodedBytes = atob(base64Str);
+    const uint8Array = new Uint8Array(decodedBytes.length);
+
+    for (let i = 0; i < decodedBytes.length; i++) {
+        uint8Array[i] = decodedBytes.charCodeAt(i);
+    }
+
+    const decoder = new TextDecoder("utf-8", { fatal: true });
+    try {
+        return decoder.decode(uint8Array);
+    } catch (e) {
+        console.error("Failed to decode Base64 content:", e);
+        return "";
+    }
+};
 
 export default function Property() {
     const [formData, setFormData] = useState({
@@ -36,6 +53,32 @@ export default function Property() {
     });
 
     const [price, setPrice] = useState(0);
+    const [explaination, setExplaination] = useState("");
+    const [limeHtml, setLimeHtml] = useState("");
+
+    const fetchExplanation = async () => {
+        try {
+            const response = await fetch("http://localhost:5000/plot1", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const decodedHtml = decodeBase64(data.lime_explanation_html); // Decode the base64 HTML
+                console.log(decodedHtml);
+                setLimeHtml(decodedHtml); // Save the decoded HTML in state
+                setExplaination(data.text);
+            } else {
+                console.error("Failed to fetch explanation.");
+            }
+        } catch (error) {
+            console.error("Error fetching explanation:", error);
+        }
+    };
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -58,7 +101,7 @@ export default function Property() {
         formData.ready_to_move = +formData.ready_to_move;
         formData.resale = +formData.resale;
 
-        console.log(formData);
+        // console.log(formData);
 
         const response = await fetch(url, {
             method: "POST", // HTTP method
@@ -222,10 +265,27 @@ export default function Property() {
                             fontSize: 21.5,
                             maxWidth: 250,
                             borderRadius: 2,
+                            mr: 5,
                         }}
                         onClick={handleSubmit}
                     >
                         Predict Price
+                    </Button>
+                    <Button
+                        variant="contained"
+                        type="submit"
+                        color="secondary"
+                        size="large"
+                        endIcon={<TipsAndUpdatesOutlinedIcon />}
+                        sx={{
+                            textTransform: "none",
+                            fontSize: 21.5,
+                            maxWidth: 250,
+                            borderRadius: 2,
+                        }}
+                        onClick={fetchExplanation}
+                    >
+                        Explain
                     </Button>
                 </Box>
             </Box>{" "}
@@ -247,6 +307,49 @@ export default function Property() {
                     <Typography variant="h6">
                         Predicted Price By Model is Rs.{price} Lakh
                     </Typography>
+                )}
+            </Box>
+            <Box
+                sx={{
+                    marginTop: 5, // Add space between the form and prediction result
+                    padding: 3,
+                    textAlign: "center",
+                    border: "1px solid #ccc",
+                    borderRadius: 2,
+                    width: "100%",
+                    maxWidth: "1050px",
+                }}
+            >
+                {explaination === "" ? (
+                    <Typography variant="h6">No Explaination</Typography>
+                ) : (
+                    <Typography variant="h6">{explaination}</Typography>
+                )}
+            </Box>
+            <Box
+                sx={{
+                    marginTop: 5, // Add space between the form and prediction result
+                    padding: 3,
+                    textAlign: "center",
+                    border: "1px solid #ccc",
+                    borderRadius: 2,
+                    width: "100%",
+                    maxWidth: "1050px",
+                }}
+            >
+                {limeHtml === "" ? (
+                    <Typography variant="h6">No Explaination</Typography>
+                ) : (
+                    <iframe
+                        title="LIME Explanation"
+                        srcDoc={limeHtml}
+                        style={{
+                            width: "100%",
+                            height: "500px",
+                            border: "none",
+                        }}
+                        sandbox="allow-scripts"
+                    ></iframe>
                 )}
             </Box>
         </Box> //Page Box End
